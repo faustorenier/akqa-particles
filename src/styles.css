@@ -1,0 +1,88 @@
+:root {
+  color-scheme: dark;
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+  background: #000;
+  color: #f2f2f2;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: #000;
+}
+
+.scroll-track {
+  height: 400vh;
+}
+
+.stage {
+  position: fixed !important;
+  inset: 0;
+  width: 100vw !important;
+  height: 100vh !important;
+  touch-action: pan-y;
+}
+
+.hint {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  margin: 0;
+  transform: translateX(-50%);
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.45);
+  pointer-events: none;
+}
+
+.pause,
+.error button {
+  font: inherit;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: #f2f2f2;
+  background: rgb(255 255 255 / 0.06);
+  border: 1px solid rgb(255 255 255 / 0.2);
+  border-radius: 999px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+.pause {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+}
+
+.pause:hover,
+.error button:hover {
+  background: rgb(255 255 255 / 0.12);
+}
+
+.pause:focus-visible,
+.error button:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+.error {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: 16px;
+  padding: 24px;
+  text-align: center;
+  background: #000;
+}
+
+@media (max-width: 600px) {
+  .hint {
+    bottom: 64px;
+  }
+}
