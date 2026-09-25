@@ -14,6 +14,7 @@ import {
   min,
   mix,
   select,
+  sin,
   smoothstep,
   uniform,
   uv,
@@ -39,6 +40,8 @@ const SPLAT_FORCE = 0.6
 // Semi-Lagrangian advection stays sharp below ~2 cells per frame.
 const MAX_SPEED = 120
 const SPLAT_DYE = 14
+const SMOKE_OPACITY = 0.5
+const NEBULA_DRIFT = 0.08
 
 type Field = 'float' | 'vec2'
 
@@ -61,6 +64,7 @@ export function createFluid() {
   const uTo = uniform(new Vector2())
   const uPointerVelocity = uniform(new Vector2())
   const uEnergy = uniform(0)
+  const uTime = uniform(0)
 
   const cellX = int(instanceIndex).mod(int(GRID_W))
   const cellY = int(instanceIndex).div(int(GRID_W))
@@ -170,8 +174,15 @@ export function createFluid() {
     .mul(smoothstep(0, 0.1, uv().y))
     .mul(smoothstep(0, 0.1, uv().y.oneMinus()))
   const glow = density.mul(2).negate().exp().oneMinus().mul(edge)
-  // Thin smoke reads cool blue; dense cores burn towards white.
-  material.colorNode = mix(vec3(0.5, 0.68, 1), vec3(1, 0.98, 0.95), smoothstep(0.3, 0.9, glow)).mul(glow)
+  const drift = uTime.mul(NEBULA_DRIFT)
+  const nebula = sin(uv().x.mul(5).add(uv().y.mul(3)).add(drift))
+    .mul(sin(uv().y.mul(4).sub(uv().x.mul(2)).sub(drift.mul(1.3))))
+    .mul(0.5)
+    .add(0.5)
+  const tint = mix(vec3(0.45, 0.8, 1), vec3(0.62, 0.48, 1), nebula)
+  // Thin wisps sink to deep blue, mid densities take the drifting nebula tint, cores burn white.
+  const hue = mix(vec3(0.22, 0.35, 0.95), tint, smoothstep(0.02, 0.35, glow))
+  material.colorNode = mix(hue, vec3(1, 0.98, 1), smoothstep(0.45, 0.95, glow)).mul(glow).mul(SMOKE_OPACITY)
   const mesh = new Mesh(new PlaneGeometry(WORLD_W, WORLD_H), material)
   mesh.position.z = PLANE_Z
   mesh.renderOrder = 1
@@ -181,6 +192,7 @@ export function createFluid() {
     /** Injects the pointer segment (group-local world units) and advances the fluid one frame. */
     step(renderer: WebGPURenderer, dt: number, from: Vector2, to: Vector2, pointerVelocity: Vector2, energy: number) {
       uDt.value = dt
+      uTime.value += dt
       uFrom.value.copy(from)
       uTo.value.copy(to)
       uPointerVelocity.value.copy(pointerVelocity)
