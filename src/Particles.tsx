@@ -27,6 +27,8 @@ const TRAIL_GAIN = 0.4;
 const TRAIL_SPACING = 0.45;
 const TRAIL_LIFETIME = 0.8;
 const GLOW_SCALE = 1.8 / POINTER_FORCE;
+const SMOKE_IGNITION = 0.35;
+const SMOKE_RESPONSE = 8;
 
 type Props = { paused: RefObject<boolean>; reducedMotion: boolean };
 
@@ -68,6 +70,7 @@ export function Particles({ paused, reducedMotion }: Props) {
     active: false,
     strength: 0,
     energy: 0,
+    smoke: 0,
     tracking: false,
     prev: new Vector3(),
     lastDrop: new Vector3(),
@@ -208,7 +211,15 @@ export function Particles({ paused, reducedMotion }: Props) {
 
     p.to.set(p.prev.x, p.prev.y);
     if (!emitting) p.from.copy(p.to);
-    const inflow = emitting ? p.energy ** 1.5 * (reducedMotion ? 0.3 : 1) : 0;
+    // Tracks raw speed rather than p.energy, whose slow release would keep smoking after a stop.
+    p.smoke += (energyTarget - p.smoke) * (1 - Math.exp(-dt * SMOKE_RESPONSE));
+    const ignition = Math.min(
+      1,
+      Math.max(0, (p.smoke - SMOKE_IGNITION) / (1 - SMOKE_IGNITION)),
+    );
+    const inflow = emitting
+      ? ignition * ignition * (3 - 2 * ignition) * (reducedMotion ? 0.3 : 1)
+      : 0;
     fluid.step(gl, dt, p.from, p.to, p.velocity, inflow);
   });
 
